@@ -4,6 +4,7 @@ import { getOption } from "../lib/util";
 export type Overrides = Partial<{
   sourceType: ParserOptions["sourceType"];
   strictMode: ParserOptions["strictMode"];
+  plugins: ParserPlugin[];
 }>;
 
 export default function getBabelOptions(
@@ -58,6 +59,7 @@ export default function getBabelOptions(
       "throwExpressions",
       "topLevelAwait",
       "v8intrinsic",
+      ...(options?.plugins || [])
     ],
   };
 }
