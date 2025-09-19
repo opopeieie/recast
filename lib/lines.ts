@@ -1,4 +1,4 @@
-import assert from "assert";
+import invariant from "tiny-invariant";
 import sourceMap from "source-map";
 import { normalize as normalizeOptions, Options } from "./options";
 import { namedTypes } from "ast-types";
@@ -22,6 +22,10 @@ type LineInfo = {
   readonly sliceEnd: number;
 };
 
+type MutableLineInfo = {
+  -readonly [K in keyof LineInfo]: LineInfo[K];
+};
+
 export class Lines {
   public readonly length: number;
   public readonly name: string | null;
@@ -30,7 +34,7 @@ export class Lines {
   private cachedTabWidth: number | void = void 0;
 
   constructor(private infos: LineInfo[], sourceFileName: string | null = null) {
-    assert.ok(infos.length > 0);
+    invariant(infos.length > 0);
     this.length = infos.length;
     this.name = sourceFileName || null;
 
@@ -96,7 +100,7 @@ export class Lines {
       ) {
         const sourceChar = mapping.sourceLines.charAt(sourceCursor);
         const targetChar = targetLines.charAt(targetCursor);
-        assert.strictEqual(sourceChar, targetChar);
+        invariant(sourceChar === targetChar);
 
         const sourceName = mapping.sourceLines.name;
 
@@ -124,9 +128,9 @@ export class Lines {
   }
 
   bootstrapCharAt(pos: Pos) {
-    assert.strictEqual(typeof pos, "object");
-    assert.strictEqual(typeof pos.line, "number");
-    assert.strictEqual(typeof pos.column, "number");
+    invariant(typeof pos === "object");
+    invariant(typeof pos.line === "number");
+    invariant(typeof pos.column === "number");
 
     const line = pos.line,
       column = pos.column,
@@ -143,9 +147,9 @@ export class Lines {
   }
 
   charAt(pos: Pos) {
-    assert.strictEqual(typeof pos, "object");
-    assert.strictEqual(typeof pos.line, "number");
-    assert.strictEqual(typeof pos.column, "number");
+    invariant(typeof pos === "object");
+    invariant(typeof pos.line === "number");
+    invariant(typeof pos.column === "number");
 
     let line = pos.line,
       column = pos.column,
@@ -171,12 +175,12 @@ export class Lines {
   stripMargin(width: number, skipFirstLine: boolean) {
     if (width === 0) return this;
 
-    assert.ok(width > 0, "negative margin: " + width);
+    invariant(width > 0, "negative margin: " + width);
 
     if (skipFirstLine && this.length === 1) return this;
 
     const lines = new Lines(
-      this.infos.map(function (info: any, i: any) {
+      this.infos.map(function (info, i) {
         if (info.line && (i > 0 || !skipFirstLine)) {
           info = {
             ...info,
@@ -189,8 +193,8 @@ export class Lines {
 
     if (this.mappings.length > 0) {
       const newMappings = lines.mappings;
-      assert.strictEqual(newMappings.length, 0);
-      this.mappings.forEach(function (mapping: any) {
+      invariant(newMappings.length === 0);
+      this.mappings.forEach(function (mapping) {
         newMappings.push(mapping.indent(width, skipFirstLine, true));
       });
     }
@@ -204,7 +208,7 @@ export class Lines {
     }
 
     const lines = new Lines(
-      this.infos.map(function (info: any) {
+      this.infos.map(function (info) {
         if (info.line && !info.locked) {
           info = {
             ...info,
@@ -217,8 +221,8 @@ export class Lines {
 
     if (this.mappings.length > 0) {
       const newMappings = lines.mappings;
-      assert.strictEqual(newMappings.length, 0);
-      this.mappings.forEach(function (mapping: any) {
+      invariant(newMappings.length === 0);
+      this.mappings.forEach(function (mapping) {
         newMappings.push(mapping.indent(by));
       });
     }
@@ -236,7 +240,7 @@ export class Lines {
     }
 
     const lines = new Lines(
-      this.infos.map(function (info: any, i: any) {
+      this.infos.map(function (info, i) {
         if (i > 0 && info.line && !info.locked) {
           info = {
             ...info,
@@ -250,8 +254,8 @@ export class Lines {
 
     if (this.mappings.length > 0) {
       const newMappings = lines.mappings;
-      assert.strictEqual(newMappings.length, 0);
-      this.mappings.forEach(function (mapping: any) {
+      invariant(newMappings.length === 0);
+      this.mappings.forEach(function (mapping) {
         newMappings.push(mapping.indent(by, true));
       });
     }
@@ -265,7 +269,7 @@ export class Lines {
     }
 
     return new Lines(
-      this.infos.map((info: any, i: any) => ({
+      this.infos.map((info, i) => ({
         ...info,
         locked: i > 0,
       })),
@@ -273,7 +277,7 @@ export class Lines {
   }
 
   getIndentAt(line: number) {
-    assert.ok(line >= 1, "no line " + line + " (line numbers start from 1)");
+    invariant(line >= 1, "no line " + line + " (line numbers start from 1)");
     return Math.max(this.infos[line - 1].indent, 0);
   }
 
@@ -282,7 +286,7 @@ export class Lines {
       return this.cachedTabWidth;
     }
 
-    const counts: any[] = []; // Sparse array.
+    const counts: number[] = []; // Sparse array.
     let lastIndent = 0;
 
     for (let line = 1, last = this.length; line <= last; ++line) {
@@ -525,17 +529,17 @@ export class Lines {
     if (start.line === end.line) {
       sliced[0] = sliceInfo(sliced[0], start.column, end.column);
     } else {
-      assert.ok(start.line < end.line);
+      invariant(start.line < end.line);
       sliced[0] = sliceInfo(sliced[0], start.column);
-      sliced.push(sliceInfo(sliced.pop(), 0, end.column));
+      sliced.push(sliceInfo(sliced.pop()!, 0, end.column));
     }
 
     const lines = new Lines(sliced);
 
     if (this.mappings.length > 0) {
       const newMappings = lines.mappings;
-      assert.strictEqual(newMappings.length, 0);
-      this.mappings.forEach(function (this: any, mapping: any) {
+      invariant(newMappings.length === 0);
+      this.mappings.forEach(function (this: Lines, mapping) {
         const sliced = mapping.slice(this, start, end);
         if (sliced) {
           newMappings.push(sliced);
@@ -618,9 +622,9 @@ export class Lines {
 
   join(elements: (string | Lines)[]) {
     const separator = this;
-    const infos: any[] = [];
-    const mappings: any[] = [];
-    let prevInfo: any;
+    const infos: LineInfo[] = [];
+    const mappings: Mapping[] = [];
+    let prevInfo: MutableLineInfo | undefined;
 
     function appendLines(linesOrNull: Lines | null) {
       if (linesOrNull === null) {
@@ -648,7 +652,7 @@ export class Lines {
         prevInfo.sliceEnd = prevInfo.line.length;
 
         if (linesOrNull.mappings.length > 0) {
-          linesOrNull.mappings.forEach(function (mapping: any) {
+          linesOrNull.mappings.forEach(function (mapping) {
             mappings.push(mapping.add(prevLine, prevColumn));
           });
         }
@@ -656,7 +660,7 @@ export class Lines {
         mappings.push.apply(mappings, linesOrNull.mappings);
       }
 
-      linesOrNull.infos.forEach(function (info: any, i: any) {
+      linesOrNull.infos.forEach(function (info, i) {
         if (!prevInfo || i > 0) {
           prevInfo = { ...info };
           infos.push(prevInfo);
@@ -670,7 +674,7 @@ export class Lines {
     }
 
     elements
-      .map(function (elem: any) {
+      .map(function (elem) {
         const lines = fromString(elem);
         if (lines.isEmpty()) return null;
         return lines;
@@ -695,16 +699,16 @@ export class Lines {
   concat(...args: (string | Lines)[]) {
     const list: typeof args = [this];
     list.push.apply(list, args);
-    assert.strictEqual(list.length, args.length + 1);
+    invariant(list.length === args.length + 1);
     return emptyLines.join(list);
   }
 }
 
-const fromStringCache: any = {};
+const fromStringCache: Record<string, Lines> = {};
 const hasOwn = fromStringCache.hasOwnProperty;
 const maxCacheKeyLen = 10;
 
-export function countSpaces(spaces: any, tabWidth?: number) {
+export function countSpaces(spaces: string, tabWidth?: number) {
   let count = 0;
   const len = spaces.length;
 
@@ -712,8 +716,8 @@ export function countSpaces(spaces: any, tabWidth?: number) {
     switch (spaces.charCodeAt(i)) {
       case 9: {
         // '\t'
-        assert.strictEqual(typeof tabWidth, "number");
-        assert.ok(tabWidth! > 0);
+        invariant(typeof tabWidth === "number");
+        invariant(tabWidth! > 0);
 
         const next = Math.ceil(count / tabWidth!) * tabWidth!;
         if (next === count) {
@@ -761,7 +765,7 @@ export function fromString(string: string | Lines, options?: Options): Lines {
   const tabless = string.indexOf("\t") < 0;
   const cacheable = !options && tabless && string.length <= maxCacheKeyLen;
 
-  assert.ok(
+  invariant(
     tabWidth || tabless,
     "No tab width specified but encountered tabs in string\n" + string,
   );
@@ -794,7 +798,7 @@ function isOnlyWhitespace(string: string) {
   return !/\S/.test(string);
 }
 
-function sliceInfo(info: any, startCol: number, endCol?: number) {
+function sliceInfo(info: LineInfo, startCol: number, endCol?: number) {
   let sliceStart = info.sliceStart;
   let sliceEnd = info.sliceEnd;
   let indent = Math.max(info.indent, 0);
@@ -826,9 +830,9 @@ function sliceInfo(info: any, startCol: number, endCol?: number) {
     sliceStart += startCol;
   }
 
-  assert.ok(indent >= 0);
-  assert.ok(sliceStart <= sliceEnd);
-  assert.strictEqual(lineLength, indent + sliceEnd - sliceStart);
+  invariant(indent >= 0);
+  invariant(sliceStart <= sliceEnd);
+  invariant(lineLength === indent + sliceEnd - sliceStart);
 
   if (
     info.indent === indent &&
@@ -848,7 +852,7 @@ function sliceInfo(info: any, startCol: number, endCol?: number) {
   };
 }
 
-export function concat(elements: any) {
+export function concat(elements: (string | Lines)[]) {
   return emptyLines.join(elements);
 }
 
