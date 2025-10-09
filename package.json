@@ -29,9 +29,7 @@
     "lint": "eslint --ext .ts .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "clean": "tsc --build --clean",
-    "prepare": "npm run build",
-    "postpack": "npm run clean"
+    "clean": "tsc --build --clean"
   },
   "lint-staged": {
     "*.ts": [

@@ -4,9 +4,10 @@
 /test/data/graphql-tools-src
 
 # Ignore TypeScript-emitted files
-*.js
-!.*rc.js
-*.d.ts
 # Except...
 !/types/**/*.d.ts
 .gitpod.yml
+!main.js
+!main.d.ts
+test/
+
