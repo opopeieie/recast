@@ -12,7 +12,8 @@
     "moduleResolution": "node",
     "esModuleInterop": true,
     "importHelpers": true,
-    "stripInternal": true
+    "stripInternal": true,
+    "skipLibCheck": true
   },
   "exclude": ["node_modules", "test/data"]
 }
